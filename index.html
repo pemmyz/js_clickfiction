@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Bar Race</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button id="mode-toggle" aria-label="Toggle dark/light mode">🌙</button>
+
+    <div class="container">
+        <h1>Progress Bar Race</h1>
+
+        <div id="winner-announcement" class="winner-announcement" style="display: none;"></div>
+
+        <div class="game-area">
+            <div class="player-section">
+                <h2>Player 1 (W key)</h2>
+                <div class="progress-container">
+                    <div id="player1-progress" class="progress-bar player1">
+                        <span id="player1-value" class="progress-value">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="player-section">
+                <h2>Player 2 (Up Arrow)</h2>
+                <div class="progress-container">
+                    <div id="player2-progress" class="progress-bar player2">
+                        <span id="player2-value" class="progress-value">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button id="reset-button">Reset Game</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

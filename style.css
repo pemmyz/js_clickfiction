@@ -1,0 +1,209 @@
+:root {
+    /* Light Mode Variables */
+    --bg-color-light: #f0f4f8;
+    --text-color-light: #333;
+    --container-bg-light: #ffffff;
+    --progress-bg-light: #e0e0e0;
+    --p1-color-light: #ff6347; /* Tomato */
+    --p2-color-light: #4682b4; /* SteelBlue */
+    --button-bg-light: #6c757d;
+    --button-text-light: #fff;
+    --border-color-light: #ccc;
+
+    /* Dark Mode Variables */
+    --bg-color-dark: #1a1a2e;
+    --text-color-dark: #e0e0e0;
+    --container-bg-dark: #16213e;
+    --progress-bg-dark: #3a3a5e;
+    --p1-color-dark: #ff8a65; /* Lighter Tomato */
+    --p2-color-dark: #64b5f6; /* Lighter SteelBlue */
+    --button-bg-dark: #0f3460;
+    --button-text-dark: #e0e0e0;
+    --border-color-dark: #535374;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--bg-color-light);
+    color: var(--text-color-light);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+    background-color: var(--bg-color-dark);
+    color: var(--text-color-dark);
+}
+
+#mode-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px;
+    font-size: 1.5em;
+    background-color: transparent;
+    border: 1px solid var(--border-color-light);
+    color: var(--text-color-light);
+    cursor: pointer;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+body.dark-mode #mode-toggle {
+    border-color: var(--border-color-dark);
+    color: var(--text-color-dark);
+}
+#mode-toggle:hover {
+    background-color: var(--progress-bg-light);
+}
+body.dark-mode #mode-toggle:hover {
+    background-color: var(--progress-bg-dark);
+}
+
+
+.container {
+    text-align: center;
+    background-color: var(--container-bg-light);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 700px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+body.dark-mode .container {
+    background-color: var(--container-bg-dark);
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+.game-area {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end; /* Align items to bottom for vertical progress bars */
+    margin-top: 20px;
+    margin-bottom: 30px;
+    min-height: 350px; /* Ensure space for progress bars */
+}
+
+.player-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 20px;
+}
+
+.player-section h2 {
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.progress-container {
+    width: 60px; /* Width of the vertical bar */
+    height: 300px; /* Height of the vertical bar */
+    background-color: var(--progress-bg-light);
+    border: 1px solid var(--border-color-light);
+    border-radius: 8px;
+    position: relative; /* For positioning the fill */
+    overflow: hidden; /* Hide overflow of progress fill */
+    display: flex;
+    flex-direction: column-reverse; /* Fill from bottom */
+    transition: background-color 0.3s, border-color 0.3s;
+}
+body.dark-mode .progress-container {
+    background-color: var(--progress-bg-dark);
+    border-color: var(--border-color-dark);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 0%; /* Initial height */
+    position: absolute; /* Changed from relative for correct fill */
+    bottom: 0;          /* Align to bottom */
+    left: 0;
+    display: flex;
+    align-items: center; /* Center text vertically */
+    justify-content: center; /* Center text horizontally */
+    color: white;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: height 0.1s ease-out, background-color 0.3s;
+    border-radius: 6px 6px 0 0; /* Rounded top corners */
+}
+
+.progress-value {
+    position: absolute;
+    bottom: 5px; /* Position percentage at the bottom of the fill */
+    width: 100%;
+    text-align: center;
+    color: #fff; /* Ensure visibility over progress bar color */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+
+.player1 {
+    background-color: var(--p1-color-light);
+}
+body.dark-mode .player1 {
+    background-color: var(--p1-color-dark);
+}
+
+.player2 {
+    background-color: var(--p2-color-light);
+}
+body.dark-mode .player2 {
+    background-color: var(--p2-color-dark);
+}
+
+#reset-button {
+    padding: 12px 25px;
+    font-size: 1em;
+    background-color: var(--button-bg-light);
+    color: var(--button-text-light);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+body.dark-mode #reset-button {
+    background-color: var(--button-bg-dark);
+    color: var(--button-text-dark);
+}
+#reset-button:hover {
+    opacity: 0.9;
+}
+
+.winner-announcement {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--p1-color-light); /* Default to P1 color, JS will change */
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .winner-announcement {
+    color: var(--p1-color-dark);
+}
+
+/* Specific winner colors */
+.winner-announcement.player1-win {
+    color: var(--p1-color-light);
+}
+body.dark-mode .winner-announcement.player1-win {
+    color: var(--p1-color-dark);
+}
+.winner-announcement.player2-win {
+    color: var(--p2-color-light);
+}
+body.dark-mode .winner-announcement.player2-win {
+    color: var(--p2-color-dark);
+}
