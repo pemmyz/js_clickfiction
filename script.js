@@ -90,20 +90,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentDifficulty = event.target.value;
         if (currentDifficulty === 'manual') {
             manualControlsArea.style.display = 'block';
-            // Sliders are now active for manual adjustment
         } else {
             manualControlsArea.style.display = 'none';
         }
         updateGameParameters();
-        // Consider if game should reset on difficulty change:
-        // resetGame(); // Optional: uncomment to reset game immediately
+        // resetGame(); // Optional: uncomment to reset game immediately if desired
     }
 
     difficultyRadios.forEach(radio => {
         radio.addEventListener('change', handleDifficultyChange);
     });
 
-    // Event listeners for manual sliders (only affect game if currentDifficulty is 'manual')
     incrementSlider.addEventListener('input', () => {
         incrementValueDisplay.textContent = incrementSlider.value;
         if (currentDifficulty === 'manual') {
@@ -180,15 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drainProgress() {
         if (!gameActive) return;
-        // Ensure drainRate is using the current setting
-        const currentDrain = (currentDifficulty === 'manual') ? (parseFloat(drainRateSlider.value) / 10) : difficultySettings[currentDifficulty].drainRate;
 
         if (player1Progress > 0) {
-            player1Progress -= currentDrain;
+            player1Progress -= drainRate; // drainRate is updated by updateGameParameters
             if (player1Progress < 0) player1Progress = 0;
         }
         if (player2Progress > 0) {
-            player2Progress -= currentDrain;
+            player2Progress -= drainRate; // drainRate is updated by updateGameParameters
             if (player2Progress < 0) player2Progress = 0;
         }
         updateProgressUI();
@@ -197,19 +192,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleKeyPress(event) {
         if (!gameActive) return;
         const currentTime = Date.now();
-        // Ensure increment is using the current setting
-        const currentIncrement = (currentDifficulty === 'manual') ? parseInt(incrementSlider.value) : difficultySettings[currentDifficulty].increment;
-
+        
         if (event.key === 'w' || event.key === 'W') {
             if (currentTime - lastPressTimeP1 > pressCooldown) {
-                player1Progress += currentIncrement;
+                player1Progress += increment; // increment is updated by updateGameParameters
                 if (player1Progress > maxProgress) player1Progress = maxProgress;
                 lastPressTimeP1 = currentTime;
             }
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
             if (currentTime - lastPressTimeP2 > pressCooldown) {
-                player2Progress += currentIncrement;
+                player2Progress += increment; // increment is updated by updateGameParameters
                 if (player2Progress > maxProgress) player2Progress = maxProgress;
                 lastPressTimeP2 = currentTime;
             }
@@ -246,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initial Setup ---
     updateScoreUI();
-    // Set initial difficulty and apply its settings
     const initialDifficultyRadio = document.querySelector('input[name="difficulty"]:checked');
     if (initialDifficultyRadio) {
         currentDifficulty = initialDifficultyRadio.value;
@@ -256,6 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         manualControlsArea.style.display = 'none';
     }
-    updateGameParameters(); // This will set slider values correctly even for presets
-    resetGame(); // Initialize game state and start
+    updateGameParameters(); 
+    resetGame(); 
 });
