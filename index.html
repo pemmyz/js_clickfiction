@@ -19,11 +19,28 @@
 
         <div id="winner-announcement" class="winner-announcement" style="display: none;"></div>
 
-        <div class="settings-area">
-            <label for="increment-slider">Press Power (1-15): </label>
-            <input type="range" id="increment-slider" min="1" max="15" value="6">
-            <span id="increment-value">6</span>
+        <div class="difficulty-settings">
+            <h3>Difficulty</h3>
+            <div class="difficulty-options">
+                <label><input type="radio" name="difficulty" value="easy"> Easy</label>
+                <label><input type="radio" name="difficulty" value="medium" checked> Medium</label>
+                <label><input type="radio" name="difficulty" value="hard"> Hard</label>
+                <label><input type="radio" name="difficulty" value="manual"> Manual</label>
+            </div>
         </div>
+
+        <div id="manual-controls" class="manual-controls-area" style="display: none;">
+            <h4>Manual Settings</h4>
+            <div class="settings-group">
+                <label for="increment-slider">Press Power (<span id="increment-value-display">6</span>): </label>
+                <input type="range" id="increment-slider" min="1" max="15" value="6">
+            </div>
+            <div class="settings-group">
+                <label for="drain-rate-slider">Drain Speed (<span id="drain-rate-value-display">0.6</span>): </label>
+                <input type="range" id="drain-rate-slider" min="1" max="20" value="6"> <!-- 1=0.1, 6=0.6, 20=2.0 -->
+            </div>
+        </div>
+
 
         <div class="game-area">
             <div class="player-section">

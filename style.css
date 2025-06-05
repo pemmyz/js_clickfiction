@@ -12,6 +12,7 @@
     --slider-thumb-light: var(--p1-color-light);
     --slider-track-light: var(--progress-bg-light);
     --score-text-light: var(--text-color-light);
+    --settings-border-light: #ddd;
 
     /* Dark Mode Variables */
     --bg-color-dark: #1a1a2e;
@@ -26,6 +27,7 @@
     --slider-thumb-dark: var(--p1-color-dark);
     --slider-track-dark: var(--progress-bg-dark);
     --score-text-dark: var(--text-color-dark);
+    --settings-border-dark: #2a2a4e;
 }
 
 body {
@@ -36,6 +38,8 @@ body {
     justify-content: center;
     min-height: 100vh;
     margin: 0;
+    padding-top: 70px; /* Space for mode toggle */
+    padding-bottom: 20px;
     background-color: var(--bg-color-light);
     color: var(--text-color-light);
     transition: background-color 0.3s, color 0.3s;
@@ -79,7 +83,7 @@ body.dark-mode #mode-toggle:hover {
 .container {
     text-align: center;
     background-color: var(--container-bg-light);
-    padding: 30px;
+    padding: 25px;
     border-radius: 10px;
     box-shadow: 0 0 15px rgba(0,0,0,0.1);
     width: 90%;
@@ -102,50 +106,86 @@ body.dark-mode .container {
 body.dark-mode .score-board {
     color: var(--score-text-dark);
 }
-.score-item span {
-    color: var(--p1-color-light); /* Default, JS might not need to change this if general color is fine */
-}
-body.dark-mode .score-item span {
-    color: var(--p1-color-dark);
-}
-/* You can add specific colors for player scores if desired */
-/* #player1-score { color: var(--p1-color-light); }
-body.dark-mode #player1-score { color: var(--p1-color-dark); }
-#player2-score { color: var(--p2-color-light); }
-body.dark-mode #player2-score { color: var(--p2-color-dark); } */
 
+.difficulty-settings {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid var(--settings-border-light);
+    border-radius: 8px;
+}
+body.dark-mode .difficulty-settings {
+    border-color: var(--settings-border-dark);
+}
+.difficulty-settings h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+.difficulty-options {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+.difficulty-options label {
+    cursor: pointer;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.difficulty-options label:hover {
+    background-color: var(--progress-bg-light);
+}
+body.dark-mode .difficulty-options label:hover {
+    background-color: var(--progress-bg-dark);
+}
+.difficulty-options input[type="radio"] {
+    margin-right: 5px;
+}
 
-.settings-area {
-    margin-bottom: 25px;
-    margin-top: 10px;
+.manual-controls-area {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid var(--settings-border-light);
+    border-radius: 8px;
+}
+body.dark-mode .manual-controls-area {
+    border-color: var(--settings-border-dark);
+}
+.manual-controls-area h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.05em;
+}
+.settings-group {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between; /* Better alignment for label and slider */
+    margin-bottom: 10px;
     gap: 10px;
 }
-
-.settings-area label {
-    font-size: 0.95em;
+.settings-group label {
+    font-size: 0.9em;
+    flex-shrink: 0; /* Prevent label from shrinking */
 }
-
-#increment-slider {
-    width: 150px;
-    cursor: pointer;
+.settings-group input[type="range"] {
+    flex-grow: 1; /* Allow slider to take available space */
+    max-width: 200px; /* Optional: constrain slider width */
 }
-
-#increment-value {
+.settings-group span { /* For the value display next to label */
     font-weight: bold;
-    min-width: 25px;
+    min-width: 30px;
     text-align: left;
-    font-size: 0.95em;
 }
+
 
 /* --- Custom Slider Styles --- */
 input[type=range] {
   -webkit-appearance: none;
   appearance: none;
-  width: 150px;
+  /* width: 150px;  Let flexbox handle width in .settings-group */
   background: transparent;
+  cursor: pointer;
 }
 
 input[type=range]::-webkit-slider-thumb {
@@ -213,8 +253,8 @@ body.dark-mode input[type=range]::-moz-range-track {
     display: flex;
     justify-content: space-around;
     align-items: flex-end;
-    margin-top: 20px;
-    margin-bottom: 30px;
+    margin-top: 10px; /* Reduced margin */
+    margin-bottom: 20px; /* Reduced margin */
     min-height: 350px;
 }
 
@@ -296,7 +336,7 @@ body.dark-mode .player2 {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    margin-top: 10px;
+    margin-top: 5px; /* Reduced margin */
     margin-left: 5px;
     margin-right: 5px;
 }
@@ -312,11 +352,11 @@ body.dark-mode #reset-button, body.dark-mode #reset-scores-button {
     font-size: 1.8em;
     font-weight: bold;
     color: var(--p1-color-light);
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Reduced margin */
     padding: 10px;
     border-radius: 5px;
     background-color: rgba(255, 255, 255, 0.1);
-    min-height: 1.8em; /* Prevent layout shift when text is empty */
+    min-height: 1.8em;
 }
 body.dark-mode .winner-announcement {
     color: var(--p1-color-dark);
