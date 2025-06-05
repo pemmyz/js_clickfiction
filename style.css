@@ -9,6 +9,9 @@
     --button-bg-light: #6c757d;
     --button-text-light: #fff;
     --border-color-light: #ccc;
+    --slider-thumb-light: var(--p1-color-light);
+    --slider-track-light: var(--progress-bg-light);
+    --score-text-light: var(--text-color-light);
 
     /* Dark Mode Variables */
     --bg-color-dark: #1a1a2e;
@@ -20,6 +23,9 @@
     --button-bg-dark: #0f3460;
     --button-text-dark: #e0e0e0;
     --border-color-dark: #535374;
+    --slider-thumb-dark: var(--p1-color-dark);
+    --slider-track-dark: var(--progress-bg-dark);
+    --score-text-dark: var(--text-color-dark);
 }
 
 body {
@@ -85,13 +91,131 @@ body.dark-mode .container {
     box-shadow: 0 0 20px rgba(0,0,0,0.4);
 }
 
+.score-board {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--score-text-light);
+}
+body.dark-mode .score-board {
+    color: var(--score-text-dark);
+}
+.score-item span {
+    color: var(--p1-color-light); /* Default, JS might not need to change this if general color is fine */
+}
+body.dark-mode .score-item span {
+    color: var(--p1-color-dark);
+}
+/* You can add specific colors for player scores if desired */
+/* #player1-score { color: var(--p1-color-light); }
+body.dark-mode #player1-score { color: var(--p1-color-dark); }
+#player2-score { color: var(--p2-color-light); }
+body.dark-mode #player2-score { color: var(--p2-color-dark); } */
+
+
+.settings-area {
+    margin-bottom: 25px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.settings-area label {
+    font-size: 0.95em;
+}
+
+#increment-slider {
+    width: 150px;
+    cursor: pointer;
+}
+
+#increment-value {
+    font-weight: bold;
+    min-width: 25px;
+    text-align: left;
+    font-size: 0.95em;
+}
+
+/* --- Custom Slider Styles --- */
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 150px;
+  background: transparent;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid var(--border-color-light);
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--slider-thumb-light);
+  cursor: pointer;
+  margin-top: -7px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+body.dark-mode input[type=range]::-webkit-slider-thumb {
+    border-color: var(--border-color-dark);
+    background: var(--slider-thumb-dark);
+}
+
+input[type=range]::-moz-range-thumb {
+  border: 1px solid var(--border-color-light);
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  background: var(--slider-thumb-light);
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+body.dark-mode input[type=range]::-moz-range-thumb {
+    border-color: var(--border-color-dark);
+    background: var(--slider-thumb-dark);
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 5px;
+  cursor: pointer;
+  background: var(--slider-track-light);
+  border-radius: 3px;
+  border: 1px solid var(--border-color-light);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+body.dark-mode input[type=range]::-webkit-slider-runnable-track {
+    background: var(--slider-track-dark);
+    border-color: var(--border-color-dark);
+}
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 5px;
+  cursor: pointer;
+  background: var(--slider-track-light);
+  border-radius: 3px;
+  border: 1px solid var(--border-color-light);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+body.dark-mode input[type=range]::-moz-range-track {
+    background: var(--slider-track-dark);
+    border-color: var(--border-color-dark);
+}
+/* --- End Custom Slider Styles --- */
+
+
 .game-area {
     display: flex;
     justify-content: space-around;
-    align-items: flex-end; /* Align items to bottom for vertical progress bars */
+    align-items: flex-end;
     margin-top: 20px;
     margin-bottom: 30px;
-    min-height: 350px; /* Ensure space for progress bars */
+    min-height: 350px;
 }
 
 .player-section {
@@ -107,15 +231,15 @@ body.dark-mode .container {
 }
 
 .progress-container {
-    width: 60px; /* Width of the vertical bar */
-    height: 300px; /* Height of the vertical bar */
+    width: 60px;
+    height: 300px;
     background-color: var(--progress-bg-light);
     border: 1px solid var(--border-color-light);
     border-radius: 8px;
-    position: relative; /* For positioning the fill */
-    overflow: hidden; /* Hide overflow of progress fill */
+    position: relative;
+    overflow: hidden;
     display: flex;
-    flex-direction: column-reverse; /* Fill from bottom */
+    flex-direction: column-reverse;
     transition: background-color 0.3s, border-color 0.3s;
 }
 body.dark-mode .progress-container {
@@ -125,26 +249,26 @@ body.dark-mode .progress-container {
 
 .progress-bar {
     width: 100%;
-    height: 0%; /* Initial height */
-    position: absolute; /* Changed from relative for correct fill */
-    bottom: 0;          /* Align to bottom */
+    height: 0%;
+    position: absolute;
+    bottom: 0;
     left: 0;
     display: flex;
-    align-items: center; /* Center text vertically */
-    justify-content: center; /* Center text horizontally */
+    align-items: center;
+    justify-content: center;
     color: white;
     font-weight: bold;
     font-size: 0.9em;
     transition: height 0.1s ease-out, background-color 0.3s;
-    border-radius: 6px 6px 0 0; /* Rounded top corners */
+    border-radius: 6px 6px 0 0;
 }
 
 .progress-value {
     position: absolute;
-    bottom: 5px; /* Position percentage at the bottom of the fill */
+    bottom: 5px;
     width: 100%;
     text-align: center;
-    color: #fff; /* Ensure visibility over progress bar color */
+    color: #fff;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
@@ -163,38 +287,41 @@ body.dark-mode .player2 {
     background-color: var(--p2-color-dark);
 }
 
-#reset-button {
-    padding: 12px 25px;
-    font-size: 1em;
+#reset-button, #reset-scores-button {
+    padding: 10px 20px;
+    font-size: 0.9em;
     background-color: var(--button-bg-light);
     color: var(--button-text-light);
     border: none;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+    margin-top: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
 }
-body.dark-mode #reset-button {
+body.dark-mode #reset-button, body.dark-mode #reset-scores-button {
     background-color: var(--button-bg-dark);
     color: var(--button-text-dark);
 }
-#reset-button:hover {
+#reset-button:hover, #reset-scores-button:hover {
     opacity: 0.9;
 }
 
 .winner-announcement {
     font-size: 1.8em;
     font-weight: bold;
-    color: var(--p1-color-light); /* Default to P1 color, JS will change */
+    color: var(--p1-color-light);
     margin-bottom: 20px;
     padding: 10px;
     border-radius: 5px;
     background-color: rgba(255, 255, 255, 0.1);
+    min-height: 1.8em; /* Prevent layout shift when text is empty */
 }
 body.dark-mode .winner-announcement {
     color: var(--p1-color-dark);
 }
 
-/* Specific winner colors */
 .winner-announcement.player1-win {
     color: var(--p1-color-light);
 }

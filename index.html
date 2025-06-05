@@ -7,12 +7,23 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <button id="mode-toggle" aria-label="Toggle dark/light mode">🌙</button>
+    <button id="mode-toggle" aria-label="Toggle dark/light mode">☀️</button>
 
     <div class="container">
         <h1>Progress Bar Race</h1>
 
+        <div class="score-board">
+            <div class="score-item">Player 1 Wins: <span id="player1-score">0</span></div>
+            <div class="score-item">Player 2 Wins: <span id="player2-score">0</span></div>
+        </div>
+
         <div id="winner-announcement" class="winner-announcement" style="display: none;"></div>
+
+        <div class="settings-area">
+            <label for="increment-slider">Press Power (1-15): </label>
+            <input type="range" id="increment-slider" min="1" max="15" value="6">
+            <span id="increment-value">6</span>
+        </div>
 
         <div class="game-area">
             <div class="player-section">
@@ -35,6 +46,7 @@
         </div>
 
         <button id="reset-button">Reset Game</button>
+        <button id="reset-scores-button">Reset Scores</button>
     </div>
 
     <script src="script.js"></script>
