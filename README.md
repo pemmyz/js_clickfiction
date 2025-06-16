@@ -56,15 +56,6 @@ A fast-paced 2-player reflex game built with HTML, CSS, and JavaScript. Press yo
 
 ---
 
-## 🖼️ Screenshots
 
-*(Make sure to add a `screenshots` folder and place your images there)*
 
-| Gameplay Preview |
-|------------------|
-| ![game](screenshots/game_preview.png) |
-
----
-
-## 📁 Project Structure
 
