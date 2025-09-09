@@ -270,6 +270,18 @@ body.dark-mode input[type=range]::-moz-range-track {
     font-size: 1.2em;
 }
 
+/* NEW STYLE FOR GAMEPAD ID */
+.gamepad-id {
+    font-size: 0.8em;
+    font-weight: normal;
+    color: var(--p2-color-light); /* Using a contrasting color */
+    margin-left: 8px;
+    display: inline-block; /* Ensures it flows nicely */
+}
+body.dark-mode .gamepad-id {
+    color: var(--p2-color-dark);
+}
+
 .progress-container {
     width: 60px;
     height: 300px;

@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetButton = document.getElementById('reset-button');
     const resetScoresButton = document.getElementById('reset-scores-button');
     const modeToggleButton = document.getElementById('mode-toggle');
+    
+    // NEW: Gamepad ID display elements
+    const player1GamepadIdEl = document.getElementById('player1-gamepad-id');
+    const player2GamepadIdEl = document.getElementById('player2-gamepad-id');
 
     const player1ScoreEl = document.getElementById('player1-score');
     const player2ScoreEl = document.getElementById('player2-score');
@@ -22,8 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Game State & Settings
     const maxProgress = 100;
-    let increment = 6; // Default, will be updated by difficulty/manual settings
-    let drainRate = 0.6; // Default, will be updated
+    let increment = 6;
+    let drainRate = 0.6;
     const pressCooldown = 100; // ms
     const autoRestartDelay = 3000; // 3 seconds
     const drainIntervalTime = 70; // Milliseconds for drain check
@@ -49,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameActive = true;
     let drainInterval;
     let autoRestartTimeout = null;
-    let currentDifficulty = 'medium'; // Default difficulty
+    let currentDifficulty = 'medium';
 
     // Gamepad State
     let gamepads = {};
@@ -60,11 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let player2Score = 0;
 
     const difficultySettings = {
-        easy: { increment: 10, drainRate: 0.3, drainSlider: 3 }, // drainSlider = drainRate * 10
+        easy: { increment: 10, drainRate: 0.3, drainSlider: 3 },
         medium: { increment: 6, drainRate: 0.6, drainSlider: 6 },
         hard: { increment: 4, drainRate: 1.0, drainSlider: 10 }
     };
-
 
     // --- Dark/Light Mode ---
     function applyTheme(theme) {
@@ -85,21 +88,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     applyTheme(savedTheme);
 
+    // --- UI Update Function ---
+    // NEW: Central function to update player titles with gamepad info
+    function updatePlayerUITitles() {
+        if (players.p1.gamepadIndex !== null) {
+            player1GamepadIdEl.textContent = `[GP ${players.p1.gamepadIndex}]`;
+        } else {
+            player1GamepadIdEl.textContent = '';
+        }
+        if (players.p2.gamepadIndex !== null) {
+            player2GamepadIdEl.textContent = `[GP ${players.p2.gamepadIndex}]`;
+        } else {
+            player2GamepadIdEl.textContent = '';
+        }
+    }
 
     // --- Difficulty and Manual Settings ---
     function updateGameParameters() {
         if (currentDifficulty === 'manual') {
             increment = parseInt(incrementSlider.value);
-            drainRate = parseFloat(drainRateSlider.value) / 10; // Convert slider value (1-20) to drainRate (0.1-2.0)
+            drainRate = parseFloat(drainRateSlider.value) / 10;
         } else {
             const settings = difficultySettings[currentDifficulty];
             increment = settings.increment;
             drainRate = settings.drainRate;
-            // Update sliders to reflect preset difficulty when not in manual mode
             incrementSlider.value = increment;
             drainRateSlider.value = settings.drainSlider;
         }
-        // Update display values for sliders
         incrementValueDisplay.textContent = incrementSlider.value;
         drainRateValueDisplay.textContent = (parseFloat(drainRateSlider.value) / 10).toFixed(1);
     }
@@ -114,23 +129,15 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGameParameters();
     }
 
-    difficultyRadios.forEach(radio => {
-        radio.addEventListener('change', handleDifficultyChange);
-    });
-
+    difficultyRadios.forEach(radio => radio.addEventListener('change', handleDifficultyChange));
     incrementSlider.addEventListener('input', () => {
         incrementValueDisplay.textContent = incrementSlider.value;
-        if (currentDifficulty === 'manual') {
-            updateGameParameters();
-        }
+        if (currentDifficulty === 'manual') updateGameParameters();
     });
     drainRateSlider.addEventListener('input', () => {
         drainRateValueDisplay.textContent = (parseFloat(drainRateSlider.value) / 10).toFixed(1);
-        if (currentDifficulty === 'manual') {
-            updateGameParameters();
-        }
+        if (currentDifficulty === 'manual') updateGameParameters();
     });
-
 
     // --- Score Management ---
     function updateScoreUI() {
@@ -143,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateScoreUI();
     }
     resetScoresButton.addEventListener('click', handleResetScores);
-
 
     // --- Game Logic ---
     function updateProgressUI() {
@@ -194,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drainProgress() {
         if (!gameActive) return;
-
         if (players.p1.progress > 0) {
             players.p1.progress -= drainRate;
             if (players.p1.progress < 0) players.p1.progress = 0;
@@ -233,20 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const polledPads = navigator.getGamepads ? navigator.getGamepads() : [];
         const currentTime = Date.now();
     
-        // Phase 1: Gamepad Assignment (press any face button to join)
         for (let i = 0; i < polledPads.length; i++) {
             const pad = polledPads[i];
             if (!pad || assignedGamepadIndices.has(i)) continue;
-    
             const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
-    
             if (anyFaceButtonPressed) {
                 let playerToAssignKey = null;
-                if (players.p1.gamepadIndex === null) {
-                    playerToAssignKey = 'p1';
-                } else if (players.p2.gamepadIndex === null) {
-                    playerToAssignKey = 'p2';
-                }
+                if (players.p1.gamepadIndex === null) playerToAssignKey = 'p1';
+                else if (players.p2.gamepadIndex === null) playerToAssignKey = 'p2';
     
                 if (playerToAssignKey) {
                     const player = players[playerToAssignKey];
@@ -254,22 +253,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     assignedGamepadIndices.add(i);
                     console.log(`🎮 Gamepad ${i} connected to ${player.id}.`);
                     player.gamepadButtonPressedLastFrame = false;
+                    updatePlayerUITitles(); // UPDATE UI
                 }
             }
         }
     
-        // Phase 2: Gameplay Input
         Object.values(players).forEach(player => {
             if (player.gamepadIndex === null) {
                 player.gamepadButtonPressedLastFrame = false;
                 return;
             }
-    
             const pad = polledPads[player.gamepadIndex];
             if (!pad) return; 
-    
             const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
-            
             if (anyFaceButtonPressed && !player.gamepadButtonPressedLastFrame) {
                 if (gameActive && currentTime - player.lastPressTime > pressCooldown) {
                     player.progress += increment;
@@ -279,13 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     checkWinner();
                 }
             }
-    
             player.gamepadButtonPressedLastFrame = anyFaceButtonPressed;
         });
-    
         requestAnimationFrame(pollGamepads);
     }
-
 
     function resetGame() {
         if (autoRestartTimeout) {
@@ -335,20 +328,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         assignedGamepadIndices.delete(disconnectedIndex);
+        updatePlayerUITitles(); // UPDATE UI
     });
 
     // --- Initial Setup ---
     updateScoreUI();
     const initialDifficultyRadio = document.querySelector('input[name="difficulty"]:checked');
-    if (initialDifficultyRadio) {
-        currentDifficulty = initialDifficultyRadio.value;
-    }
-    if (currentDifficulty === 'manual') {
-        manualControlsArea.style.display = 'block';
-    } else {
-        manualControlsArea.style.display = 'none';
-    }
+    if (initialDifficultyRadio) currentDifficulty = initialDifficultyRadio.value;
+    if (currentDifficulty === 'manual') manualControlsArea.style.display = 'block';
+    else manualControlsArea.style.display = 'none';
+    
     updateGameParameters(); 
+    updatePlayerUITitles(); // Set initial UI state
     resetGame(); 
-    pollGamepads(); // Start the gamepad polling loop
+    pollGamepads();
 });
