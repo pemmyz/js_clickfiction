@@ -21,8 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const drainRateValueDisplay = document.getElementById('drain-rate-value-display');
 
     // Game State & Settings
-    let player1Progress = 0;
-    let player2Progress = 0;
     const maxProgress = 100;
     let increment = 6; // Default, will be updated by difficulty/manual settings
     let drainRate = 0.6; // Default, will be updated
@@ -30,12 +28,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoRestartDelay = 3000; // 3 seconds
     const drainIntervalTime = 70; // Milliseconds for drain check
 
+    // Player State object to manage both players
+    const players = {
+        p1: {
+            id: 'Player 1',
+            progress: 0,
+            lastPressTime: 0,
+            gamepadIndex: null,
+            gamepadButtonPressedLastFrame: false
+        },
+        p2: {
+            id: 'Player 2',
+            progress: 0,
+            lastPressTime: 0,
+            gamepadIndex: null,
+            gamepadButtonPressedLastFrame: false
+        }
+    };
+
     let gameActive = true;
     let drainInterval;
     let autoRestartTimeout = null;
-    let lastPressTimeP1 = 0;
-    let lastPressTimeP2 = 0;
     let currentDifficulty = 'medium'; // Default difficulty
+
+    // Gamepad State
+    let gamepads = {};
+    let assignedGamepadIndices = new Set();
 
     // Scores
     let player1Score = 0;
@@ -94,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
             manualControlsArea.style.display = 'none';
         }
         updateGameParameters();
-        // resetGame(); // Optional: uncomment to reset game immediately if desired
     }
 
     difficultyRadios.forEach(radio => {
@@ -130,26 +147,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Logic ---
     function updateProgressUI() {
-        player1ProgressEl.style.height = `${player1Progress}%`;
-        player1ValueEl.textContent = `${Math.round(player1Progress)}%`;
-        player2ProgressEl.style.height = `${player2Progress}%`;
-        player2ValueEl.textContent = `${Math.round(player2Progress)}%`;
+        player1ProgressEl.style.height = `${players.p1.progress}%`;
+        player1ValueEl.textContent = `${Math.round(players.p1.progress)}%`;
+        player2ProgressEl.style.height = `${players.p2.progress}%`;
+        player2ValueEl.textContent = `${Math.round(players.p2.progress)}%`;
     }
 
     function checkWinner() {
         if (!gameActive) return;
         let winner = null;
-        if (player1Progress >= maxProgress) {
+        if (players.p1.progress >= maxProgress) {
             winner = 'Player 1';
-            player1Progress = maxProgress;
+            players.p1.progress = maxProgress;
         }
-        if (player2Progress >= maxProgress) {
-            if (winner === 'Player 1' && player1Progress >= maxProgress) {
+        if (players.p2.progress >= maxProgress) {
+            if (winner === 'Player 1' && players.p1.progress >= maxProgress) {
                 winner = 'It\'s a Tie!';
             } else if (!winner) {
                 winner = 'Player 2';
             }
-            player2Progress = maxProgress;
+            players.p2.progress = maxProgress;
         }
         
         if (winner) {
@@ -178,13 +195,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function drainProgress() {
         if (!gameActive) return;
 
-        if (player1Progress > 0) {
-            player1Progress -= drainRate; // drainRate is updated by updateGameParameters
-            if (player1Progress < 0) player1Progress = 0;
+        if (players.p1.progress > 0) {
+            players.p1.progress -= drainRate;
+            if (players.p1.progress < 0) players.p1.progress = 0;
         }
-        if (player2Progress > 0) {
-            player2Progress -= drainRate; // drainRate is updated by updateGameParameters
-            if (player2Progress < 0) player2Progress = 0;
+        if (players.p2.progress > 0) {
+            players.p2.progress -= drainRate;
+            if (players.p2.progress < 0) players.p2.progress = 0;
         }
         updateProgressUI();
     }
@@ -194,32 +211,96 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTime = Date.now();
         
         if (event.key === 'w' || event.key === 'W') {
-            if (currentTime - lastPressTimeP1 > pressCooldown) {
-                player1Progress += increment; // increment is updated by updateGameParameters
-                if (player1Progress > maxProgress) player1Progress = maxProgress;
-                lastPressTimeP1 = currentTime;
+            if (currentTime - players.p1.lastPressTime > pressCooldown) {
+                players.p1.progress += increment;
+                if (players.p1.progress > maxProgress) players.p1.progress = maxProgress;
+                players.p1.lastPressTime = currentTime;
             }
         } else if (event.key === 'ArrowUp') {
             event.preventDefault();
-            if (currentTime - lastPressTimeP2 > pressCooldown) {
-                player2Progress += increment; // increment is updated by updateGameParameters
-                if (player2Progress > maxProgress) player2Progress = maxProgress;
-                lastPressTimeP2 = currentTime;
+            if (currentTime - players.p2.lastPressTime > pressCooldown) {
+                players.p2.progress += increment;
+                if (players.p2.progress > maxProgress) players.p2.progress = maxProgress;
+                players.p2.lastPressTime = currentTime;
             }
         }
         updateProgressUI();
         checkWinner();
     }
+    
+    // --- Gamepad Logic ---
+    function pollGamepads() {
+        const polledPads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const currentTime = Date.now();
+    
+        // Phase 1: Gamepad Assignment (press any face button to join)
+        for (let i = 0; i < polledPads.length; i++) {
+            const pad = polledPads[i];
+            if (!pad || assignedGamepadIndices.has(i)) continue;
+    
+            const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
+    
+            if (anyFaceButtonPressed) {
+                let playerToAssignKey = null;
+                if (players.p1.gamepadIndex === null) {
+                    playerToAssignKey = 'p1';
+                } else if (players.p2.gamepadIndex === null) {
+                    playerToAssignKey = 'p2';
+                }
+    
+                if (playerToAssignKey) {
+                    const player = players[playerToAssignKey];
+                    player.gamepadIndex = i;
+                    assignedGamepadIndices.add(i);
+                    console.log(`🎮 Gamepad ${i} connected to ${player.id}.`);
+                    player.gamepadButtonPressedLastFrame = false;
+                }
+            }
+        }
+    
+        // Phase 2: Gameplay Input
+        Object.values(players).forEach(player => {
+            if (player.gamepadIndex === null) {
+                player.gamepadButtonPressedLastFrame = false;
+                return;
+            }
+    
+            const pad = polledPads[player.gamepadIndex];
+            if (!pad) return; 
+    
+            const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
+            
+            if (anyFaceButtonPressed && !player.gamepadButtonPressedLastFrame) {
+                if (gameActive && currentTime - player.lastPressTime > pressCooldown) {
+                    player.progress += increment;
+                    if (player.progress > maxProgress) player.progress = maxProgress;
+                    player.lastPressTime = currentTime;
+                    updateProgressUI();
+                    checkWinner();
+                }
+            }
+    
+            player.gamepadButtonPressedLastFrame = anyFaceButtonPressed;
+        });
+    
+        requestAnimationFrame(pollGamepads);
+    }
+
 
     function resetGame() {
         if (autoRestartTimeout) {
             clearTimeout(autoRestartTimeout);
             autoRestartTimeout = null;
         }
-        updateGameParameters(); // Apply current difficulty/manual settings on reset
+        updateGameParameters(); 
 
-        player1Progress = 0;
-        player2Progress = 0;
+        players.p1.progress = 0;
+        players.p2.progress = 0;
+        players.p1.lastPressTime = 0;
+        players.p2.lastPressTime = 0;
+        players.p1.gamepadButtonPressedLastFrame = false;
+        players.p2.gamepadButtonPressedLastFrame = false;
+
         gameActive = true;
         winnerAnnouncementEl.style.display = 'none';
         winnerAnnouncementEl.textContent = '';
@@ -228,14 +309,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
         clearInterval(drainInterval);
         drainInterval = setInterval(drainProgress, drainIntervalTime);
-
-        lastPressTimeP1 = 0;
-        lastPressTimeP2 = 0;
     }
 
     // --- Event Listeners ---
     document.addEventListener('keydown', handleKeyPress);
     resetButton.addEventListener('click', resetGame);
+    
+    window.addEventListener("gamepadconnected", (e) => {
+        console.log(`Gamepad connected at index ${e.gamepad.index}: ${e.gamepad.id}. Press a button to join.`);
+        gamepads[e.gamepad.index] = e.gamepad;
+    });
+
+    window.addEventListener("gamepaddisconnected", (e) => {
+        const disconnectedIndex = e.gamepad.index;
+        console.log(`Gamepad disconnected from index ${disconnectedIndex}.`);
+        delete gamepads[disconnectedIndex];
+
+        if (players.p1.gamepadIndex === disconnectedIndex) {
+            players.p1.gamepadIndex = null;
+            console.log(`${players.p1.id}'s gamepad disconnected.`);
+        }
+        if (players.p2.gamepadIndex === disconnectedIndex) {
+            players.p2.gamepadIndex = null;
+            console.log(`${players.p2.id}'s gamepad disconnected.`);
+        }
+        
+        assignedGamepadIndices.delete(disconnectedIndex);
+    });
 
     // --- Initial Setup ---
     updateScoreUI();
@@ -250,4 +350,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateGameParameters(); 
     resetGame(); 
+    pollGamepads(); // Start the gamepad polling loop
 });
