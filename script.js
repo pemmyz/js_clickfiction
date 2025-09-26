@@ -9,9 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetScoresButton = document.getElementById('reset-scores-button');
     const modeToggleButton = document.getElementById('mode-toggle');
     
-    // NEW: Gamepad ID display elements
+    // Gamepad ID display elements
     const player1GamepadIdEl = document.getElementById('player1-gamepad-id');
     const player2GamepadIdEl = document.getElementById('player2-gamepad-id');
+    const player1TitleEl = document.querySelector('.player-section:nth-child(1) h2');
+    const player2TitleEl = document.querySelector('.player-section:nth-child(2) h2');
 
     const player1ScoreEl = document.getElementById('player1-score');
     const player2ScoreEl = document.getElementById('player2-score');
@@ -28,25 +30,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxProgress = 100;
     let increment = 6;
     let drainRate = 0.6;
-    const pressCooldown = 100; // ms
-    const autoRestartDelay = 3000; // 3 seconds
-    const drainIntervalTime = 70; // Milliseconds for drain check
+    const autoRestartDelay = 3000;
+    const drainIntervalTime = 70;
 
-    // Player State object to manage both players
+    // [MERGED] Player State object updated for dynamic controller assignment
     const players = {
         p1: {
             id: 'Player 1',
             progress: 0,
-            lastPressTime: 0,
+            key: 'w',
+            keyDisplay: 'W key',
+            controllerType: 'keyboard', // 'keyboard', 'gamepad', or 'none'
             gamepadIndex: null,
-            gamepadButtonPressedLastFrame: false
+            element: player1ProgressEl,
+            valueElement: player1ValueEl,
+            titleElement: player1TitleEl,
+            gamepadIdElement: player1GamepadIdEl
         },
         p2: {
             id: 'Player 2',
             progress: 0,
-            lastPressTime: 0,
+            key: 'arrowup',
+            keyDisplay: 'Up Arrow',
+            controllerType: 'keyboard',
             gamepadIndex: null,
-            gamepadButtonPressedLastFrame: false
+            element: player2ProgressEl,
+            valueElement: player2ValueEl,
+            titleElement: player2TitleEl,
+            gamepadIdElement: player2GamepadIdEl
         }
     };
 
@@ -55,9 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let autoRestartTimeout = null;
     let currentDifficulty = 'medium';
 
-    // Gamepad State
+    // [MERGED] New state variables for advanced gamepad handling
     let gamepads = {};
-    let assignedGamepadIndices = new Set();
+    let assignedInputs = new Set();
+    let lastGamepadButtonStates = {};
 
     // Scores
     let player1Score = 0;
@@ -89,18 +101,17 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTheme(savedTheme);
 
     // --- UI Update Function ---
-    // NEW: Central function to update player titles with gamepad info
+    // [MERGED] Updated function to show detailed controller info
     function updatePlayerUITitles() {
-        if (players.p1.gamepadIndex !== null) {
-            player1GamepadIdEl.textContent = `[GP ${players.p1.gamepadIndex}]`;
-        } else {
-            player1GamepadIdEl.textContent = '';
-        }
-        if (players.p2.gamepadIndex !== null) {
-            player2GamepadIdEl.textContent = `[GP ${players.p2.gamepadIndex}]`;
-        } else {
-            player2GamepadIdEl.textContent = '';
-        }
+        Object.values(players).forEach(player => {
+            let controlInfo = '';
+            if (player.controllerType === 'keyboard') {
+                controlInfo = `(${player.keyDisplay})`;
+            } else if (player.controllerType === 'gamepad') {
+                controlInfo = `(GP ${player.gamepadIndex})`;
+            }
+            player.gamepadIdElement.textContent = controlInfo;
+        });
     }
 
     // --- Difficulty and Manual Settings ---
@@ -121,11 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleDifficultyChange(event) {
         currentDifficulty = event.target.value;
-        if (currentDifficulty === 'manual') {
-            manualControlsArea.style.display = 'block';
-        } else {
-            manualControlsArea.style.display = 'none';
-        }
+        manualControlsArea.style.display = currentDifficulty === 'manual' ? 'block' : 'none';
         updateGameParameters();
     }
 
@@ -153,27 +160,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Logic ---
     function updateProgressUI() {
-        player1ProgressEl.style.height = `${players.p1.progress}%`;
-        player1ValueEl.textContent = `${Math.round(players.p1.progress)}%`;
-        player2ProgressEl.style.height = `${players.p2.progress}%`;
-        player2ValueEl.textContent = `${Math.round(players.p2.progress)}%`;
+        players.p1.element.style.height = `${players.p1.progress}%`;
+        players.p1.valueElement.textContent = `${Math.round(players.p1.progress)}%`;
+        players.p2.element.style.height = `${players.p2.progress}%`;
+        players.p2.valueElement.textContent = `${Math.round(players.p2.progress)}%`;
+    }
+    
+    // [MERGED] A single function to trigger a player's action
+    function triggerPlayerAction(player) {
+        if (!gameActive) return;
+        player.progress += increment;
+        if (player.progress > maxProgress) player.progress = maxProgress;
+        updateProgressUI();
+        checkWinner();
     }
 
     function checkWinner() {
         if (!gameActive) return;
         let winner = null;
-        if (players.p1.progress >= maxProgress) {
-            winner = 'Player 1';
-            players.p1.progress = maxProgress;
-        }
-        if (players.p2.progress >= maxProgress) {
-            if (winner === 'Player 1' && players.p1.progress >= maxProgress) {
-                winner = 'It\'s a Tie!';
-            } else if (!winner) {
-                winner = 'Player 2';
-            }
-            players.p2.progress = maxProgress;
-        }
+        if (players.p1.progress >= maxProgress) winner = 'Player 1';
+        if (players.p2.progress >= maxProgress) winner = winner ? "It's a Tie!" : 'Player 2';
         
         if (winner) {
             gameActive = false;
@@ -200,83 +206,91 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drainProgress() {
         if (!gameActive) return;
-        if (players.p1.progress > 0) {
-            players.p1.progress -= drainRate;
-            if (players.p1.progress < 0) players.p1.progress = 0;
-        }
-        if (players.p2.progress > 0) {
-            players.p2.progress -= drainRate;
-            if (players.p2.progress < 0) players.p2.progress = 0;
-        }
+        Object.values(players).forEach(player => {
+            if (player.progress > 0) {
+                player.progress -= drainRate;
+                if (player.progress < 0) player.progress = 0;
+            }
+        });
         updateProgressUI();
     }
 
     function handleKeyPress(event) {
         if (!gameActive) return;
-        const currentTime = Date.now();
+        const key = event.key.toLowerCase();
         
-        if (event.key === 'w' || event.key === 'W') {
-            if (currentTime - players.p1.lastPressTime > pressCooldown) {
-                players.p1.progress += increment;
-                if (players.p1.progress > maxProgress) players.p1.progress = maxProgress;
-                players.p1.lastPressTime = currentTime;
+        const player = Object.values(players).find(p => p.controllerType === 'keyboard' && p.key === key);
+        if (player) {
+            if (key === 'arrowup') event.preventDefault();
+            triggerPlayerAction(player);
+        }
+    }
+
+    // [MERGED] New function to handle joining attempts
+    function handleJoinAttempt(inputType, details) {
+        if (inputType === 'gamepad') {
+            const gamepadId = `gamepad_${details.index}`;
+            if (assignedInputs.has(gamepadId)) return; // Already assigned.
+    
+            // Find the first player slot not currently controlled by a gamepad.
+            let playerToAssign = null;
+            if (players.p1.controllerType !== 'gamepad') {
+                playerToAssign = players.p1;
+            } else if (players.p2.controllerType !== 'gamepad') {
+                playerToAssign = players.p2;
             }
-        } else if (event.key === 'ArrowUp') {
-            event.preventDefault();
-            if (currentTime - players.p2.lastPressTime > pressCooldown) {
-                players.p2.progress += increment;
-                if (players.p2.progress > maxProgress) players.p2.progress = maxProgress;
-                players.p2.lastPressTime = currentTime;
+    
+            if (playerToAssign) {
+                // Free up the keyboard input if it was assigned to this player
+                if (playerToAssign.controllerType === 'keyboard') {
+                    assignedInputs.delete(`keyboard_${playerToAssign.key}`);
+                }
+                
+                playerToAssign.controllerType = 'gamepad';
+                playerToAssign.gamepadIndex = details.index;
+                assignedInputs.add(gamepadId);
+                console.log(`🎮 Gamepad ${details.index} assigned to ${playerToAssign.id}.`);
+                updatePlayerUITitles();
             }
         }
-        updateProgressUI();
-        checkWinner();
     }
     
-    // --- Gamepad Logic ---
+    // [MERGED] Replaced old simple polling with the robust version from Hevoskisat
     function pollGamepads() {
         const polledPads = navigator.getGamepads ? navigator.getGamepads() : [];
-        const currentTime = Date.now();
     
         for (let i = 0; i < polledPads.length; i++) {
             const pad = polledPads[i];
-            if (!pad || assignedGamepadIndices.has(i)) continue;
-            const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
-            if (anyFaceButtonPressed) {
-                let playerToAssignKey = null;
-                if (players.p1.gamepadIndex === null) playerToAssignKey = 'p1';
-                else if (players.p2.gamepadIndex === null) playerToAssignKey = 'p2';
+            if (!pad) continue;
     
-                if (playerToAssignKey) {
-                    const player = players[playerToAssignKey];
-                    player.gamepadIndex = i;
-                    assignedGamepadIndices.add(i);
-                    console.log(`🎮 Gamepad ${i} connected to ${player.id}.`);
-                    player.gamepadButtonPressedLastFrame = false;
-                    updatePlayerUITitles(); // UPDATE UI
+            const inputId = `gamepad_${i}`;
+    
+            if (assignedInputs.has(inputId)) {
+                // Gamepad is ASSIGNED
+                const player = Object.values(players).find(p => p.gamepadIndex === i);
+                if (!player) continue;
+
+                // Iterate through face buttons (A,B,X,Y) to detect a NEW press (rising edge)
+                for (let j = 0; j < 4; j++) {
+                    const buttonIsPressed = pad.buttons[j]?.pressed;
+                    const buttonWasPressed = lastGamepadButtonStates[i]?.[j];
+
+                    if (buttonIsPressed && !buttonWasPressed) {
+                        triggerPlayerAction(player);
+                    }
+                }
+            } else {
+                // Gamepad is UNASSIGNED - Check for join attempt
+                const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
+                const wasPressedLastFrame = lastGamepadButtonStates[i] && lastGamepadButtonStates[i].slice(0, 4).some(p => p);
+
+                if (anyFaceButtonPressed && !wasPressedLastFrame) {
+                    handleJoinAttempt('gamepad', { index: i });
                 }
             }
+            // Store the current state of all buttons for the next frame
+            lastGamepadButtonStates[i] = pad.buttons.map(b => b.pressed);
         }
-    
-        Object.values(players).forEach(player => {
-            if (player.gamepadIndex === null) {
-                player.gamepadButtonPressedLastFrame = false;
-                return;
-            }
-            const pad = polledPads[player.gamepadIndex];
-            if (!pad) return; 
-            const anyFaceButtonPressed = pad.buttons.some((b, index) => index <= 3 && b.pressed);
-            if (anyFaceButtonPressed && !player.gamepadButtonPressedLastFrame) {
-                if (gameActive && currentTime - player.lastPressTime > pressCooldown) {
-                    player.progress += increment;
-                    if (player.progress > maxProgress) player.progress = maxProgress;
-                    player.lastPressTime = currentTime;
-                    updateProgressUI();
-                    checkWinner();
-                }
-            }
-            player.gamepadButtonPressedLastFrame = anyFaceButtonPressed;
-        });
         requestAnimationFrame(pollGamepads);
     }
 
@@ -286,13 +300,10 @@ document.addEventListener('DOMContentLoaded', () => {
             autoRestartTimeout = null;
         }
         updateGameParameters(); 
-
-        players.p1.progress = 0;
-        players.p2.progress = 0;
-        players.p1.lastPressTime = 0;
-        players.p2.lastPressTime = 0;
-        players.p1.gamepadButtonPressedLastFrame = false;
-        players.p2.gamepadButtonPressedLastFrame = false;
+        
+        Object.values(players).forEach(p => {
+            p.progress = 0;
+        });
 
         gameActive = true;
         winnerAnnouncementEl.style.display = 'none';
@@ -308,6 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', handleKeyPress);
     resetButton.addEventListener('click', resetGame);
     
+    // [MERGED] More robust gamepad connection/disconnection listeners
     window.addEventListener("gamepadconnected", (e) => {
         console.log(`Gamepad connected at index ${e.gamepad.index}: ${e.gamepad.id}. Press a button to join.`);
         gamepads[e.gamepad.index] = e.gamepad;
@@ -317,29 +329,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const disconnectedIndex = e.gamepad.index;
         console.log(`Gamepad disconnected from index ${disconnectedIndex}.`);
         delete gamepads[disconnectedIndex];
+        
+        const player = Object.values(players).find(p => p.gamepadIndex === disconnectedIndex);
 
-        if (players.p1.gamepadIndex === disconnectedIndex) {
-            players.p1.gamepadIndex = null;
-            console.log(`${players.p1.id}'s gamepad disconnected.`);
-        }
-        if (players.p2.gamepadIndex === disconnectedIndex) {
-            players.p2.gamepadIndex = null;
-            console.log(`${players.p2.id}'s gamepad disconnected.`);
+        if (player) {
+            console.log(`${player.id}'s gamepad disconnected. Reverting to keyboard control.`);
+            player.gamepadIndex = null;
+            // Revert player to their default keyboard control
+            player.controllerType = 'keyboard';
+            assignedInputs.add(`keyboard_${player.key}`);
         }
         
-        assignedGamepadIndices.delete(disconnectedIndex);
-        updatePlayerUITitles(); // UPDATE UI
+        assignedInputs.delete(`gamepad_${disconnectedIndex}`);
+        updatePlayerUITitles();
     });
 
     // --- Initial Setup ---
-    updateScoreUI();
-    const initialDifficultyRadio = document.querySelector('input[name="difficulty"]:checked');
-    if (initialDifficultyRadio) currentDifficulty = initialDifficultyRadio.value;
-    if (currentDifficulty === 'manual') manualControlsArea.style.display = 'block';
-    else manualControlsArea.style.display = 'none';
-    
-    updateGameParameters(); 
-    updatePlayerUITitles(); // Set initial UI state
-    resetGame(); 
-    pollGamepads();
+    function initializeGame() {
+        // [MERGED] Set up initial assigned inputs based on default player config
+        assignedInputs.clear();
+        Object.values(players).forEach(player => {
+            if(player.controllerType === 'keyboard') {
+                assignedInputs.add(`keyboard_${player.key}`);
+            }
+        });
+
+        updateScoreUI();
+        const initialDifficultyRadio = document.querySelector('input[name="difficulty"]:checked');
+        if (initialDifficultyRadio) currentDifficulty = initialDifficultyRadio.value;
+        manualControlsArea.style.display = currentDifficulty === 'manual' ? 'block' : 'none';
+        
+        updateGameParameters(); 
+        updatePlayerUITitles();
+        resetGame(); 
+        pollGamepads();
+    }
+
+    initializeGame();
 });
